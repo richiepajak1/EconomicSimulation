@@ -1,0 +1,1 @@
+#Richie Pajak independent study
