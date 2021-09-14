@@ -55,8 +55,8 @@ def create_business(type):
     all_sprites.add(new_business)
 
 
-def update():
-    agents.update()
+def update_all(businesses):
+    agents.update(businesses)
     businesses.update()
 
 
@@ -71,17 +71,50 @@ class Agent(pygame.sprite.Sprite):
         self.surf.fill((random.randint(0, 200), random.randint(0, 200), random.randint(0, 200)))
         self.rect = self.surf.get_rect()
         self.home = find_empty_home()
+        self.destination = self.home
         if self.home is None:
             self.rect.center = (0, 0)
         else:
             self.rect.center = self.home.rect.center
         self.prio_list = {
             "food": 20 - self.food,
-            "work": 0
         }
 
-        def update(): #calculate priorities, order priorities into a list, pick item at top of list, complete that objective
+    def update(self, businesses):
+        curr_prio = self.calc_prios(self.prio_list)
 
+        if curr_prio == 'food':
+            for x in businesses:
+                if x.product_type == 'food':
+                    self.destination = x
+
+
+        self.move()
+
+    def calc_prios(self, prio_list):
+        prio_list['food'] = 20
+        greatest_prio = max(prio_list, key=prio_list.get)
+        return greatest_prio
+
+    def move(self):
+        direction = self.get_direction(self.destination.rect.centerx, self.destination.rect.centery)
+        self.rect.move_ip(direction)
+
+    def get_direction(self, x, y):  # This function returns the direction that a creature should move based on the
+        # coordinates of its destination that are passed in
+        direction_x = 0
+        direction_y = 0
+        if self.rect.centerx < x:
+            direction_x = self.speed
+        if self.rect.centerx > x:
+            direction_x = -self.speed
+        if self.rect.centery < y:
+            direction_y = self.speed
+        if self.rect.centery > y:
+            direction_y = -self.speed
+
+        direction = (direction_x, direction_y)
+        return direction
 
 
 class Business(pygame.sprite.Sprite):
@@ -93,8 +126,11 @@ class Business(pygame.sprite.Sprite):
         self.rect = self.surf.get_rect()
         self.rect.center = find_business_location()
         self.product_amount = 5
-        self.product_amount = type
+        self.product_type = type
         self.is_worked = False
+
+    def update(self):
+        return
 
 
 class Home(pygame.sprite.Sprite):
@@ -144,7 +180,7 @@ while running:
             running = False
 
     screen.fill((255, 255, 255))
-    update()
+    update_all(businesses)
     for entity in all_sprites:
         screen.blit(entity.surf, entity.rect)
     clock.tick(60)
