@@ -55,11 +55,6 @@ def create_business(type):
     all_sprites.add(new_business)
 
 
-def update_all(businesses):
-    agents.update(businesses)
-    businesses.update()
-
-
 class Agent(pygame.sprite.Sprite):
     def __init__(self):
         super(Agent, self).__init__()
@@ -74,6 +69,7 @@ class Agent(pygame.sprite.Sprite):
         self.home = find_empty_home()
         self.destination = self.home
         self.at_home = True
+        self.type = 0
         if self.home is None:
             self.rect.center = (0, 0)
         else:
@@ -103,11 +99,14 @@ class Agent(pygame.sprite.Sprite):
                 if x.being_worked() is False:
                     self.destination = x
                     x.set_worked(True)
+
+        self.move()
+
         if self.rect.center == self.home.rect.center:
             self.at_home = True
         else:
             self.at_home = False
-        self.move()
+
 
     def buy(self, business):
         if self.money >= business.get_sell_price():
@@ -117,19 +116,27 @@ class Agent(pygame.sprite.Sprite):
     def spend_money(self, amount):
         self.money = self.money - amount
 
+    def gain_money(self, amount):
+        self.money = self.money + amount
+
     def calc_prios(self):
         self.prio_list['food'] = 20 - self.food
         self.work_prio = 100 - self.money
 
     def get_highest_prio(self):
         self.curr_prio = max(self.prio_list, key=self.prio_list.get)
-        print(self.curr_prio)
 
     def set_curr_prio(self, prio):
         self.curr_prio = prio
 
     def get_work_prio(self):
         return self.work_prio
+
+    def set_worker(self):
+        self.type = 1
+
+    def set_consumer(self):
+        self.type = 0
 
     def is_at_home(self):  # This is a getter function for the variable at_home
         if self.at_home is True:
@@ -171,6 +178,7 @@ class Business(pygame.sprite.Sprite):
         self.sell_price = 5
         self.money = 0
         self.is_worked = False
+        self.worker = None
 
     def update(self):
         return
@@ -184,13 +192,21 @@ class Business(pygame.sprite.Sprite):
             self.product_amount = self.product_amount - 1
             print('kaching')
 
+    def give_profits(self):
+        self.worker.gain_money(self.money)
+        self.money = 0
+
     def find_worker(self, agents):
         current_worker = None
         prio = -1000
         for x in agents:
+            print(x.get_work_prio())
             if x.get_work_prio() > prio:
                 print('here')
                 current_worker = x
+                prio = x.get_work_prio()
+        current_worker.set_worker()
+        current_worker.set_curr_prio('work')
         return current_worker
 
     def being_worked(self):
@@ -198,6 +214,10 @@ class Business(pygame.sprite.Sprite):
 
     def set_worked(self, status):
         self.is_worked = status
+
+    def clear_worker(self):
+        self.worker = None
+        self.is_worked = False
 
 
 class Home(pygame.sprite.Sprite):
@@ -221,7 +241,7 @@ homes = pygame.sprite.Group()
 agents = pygame.sprite.Group()
 businesses = pygame.sprite.Group()
 
-num_homes = 15
+num_homes = 5
 num_agents = 5
 num_businesses = 1
 i = 0
@@ -238,6 +258,8 @@ while i < num_businesses:
     i = i + 1
 
 phase = 0
+all_consumers_at_home = True
+all_agents_at_work = True
 all_agents_at_home = True
 
 running = True
@@ -252,27 +274,58 @@ while running:
         for x in agents:
             x.get_highest_prio()
         for x in businesses:
-            worker = x.find_worker(agents)
-            worker.set_curr_prio('work')
+            x.worker = x.find_worker(agents)
         phase = 1
     elif phase == 1:
-        update_all(businesses)
-
+        businesses.update()
+        for x in agents:
+            if x.type == 1:
+                x.update(businesses)
+        all_agents_at_work = True
+        for x in agents:
+            if x.type == 1 and not x.rect.colliderect(x.destination.rect):
+                all_agents_at_work = False
+        for x in agents:
+            if x.rect.colliderect(x.destination.rect) and x.type == 1:
+                x.rect.center = x.destination.rect.center
+        if all_agents_at_work is True:
+            phase = 2
+    elif phase == 2:
+        for x in agents:
+            if x.type == 0:
+                x.update(businesses)
+        all_consumers_at_home = True
+        for x in agents:
+            if x.type == 0:
+                if x.is_at_home() is False:
+                    all_consumers_at_home = False
+        if all_consumers_at_home:
+            phase = 3
+    elif phase == 3:
+        for x in agents:
+            x.set_curr_prio('home')
+            x.update(businesses)
         all_agents_at_home = True
         for x in agents:
             if x.is_at_home() is False:
                 all_agents_at_home = False
         if all_agents_at_home:
-            phase = 2
-    elif phase == 2:
+            phase = 4
+    elif phase == 4:
+        for x in businesses:
+            x.give_profits()
+            x.clear_worker()
         for x in agents:
             x.calc_prios()
+            x.set_consumer()
+            x.set_curr_prio('')
+            type = 0
         phase = 0
 
     screen.fill((255, 255, 255))
 
     for entity in all_sprites:
         screen.blit(entity.surf, entity.rect)
-    clock.tick(120)
+    clock.tick(400)
 
     pygame.display.flip()
