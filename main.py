@@ -90,6 +90,7 @@ class Agent(pygame.sprite.Sprite):
                     self.destination = x
             if self.rect.colliderect(self.destination):
                 self.buy(self.destination)
+                # right here - make buy return true if success false otherwise, add logic for deciding where to go next ie find business with product available and lowest price
                 self.curr_prio = 'home'
 
         if self.curr_prio == 'home':
@@ -98,7 +99,9 @@ class Agent(pygame.sprite.Sprite):
             for x in businesses:
                 if x.being_worked() is False:
                     self.destination = x
+                    print(self.destination)
                     x.set_worked(True)
+                    break
 
         self.move()
 
@@ -128,6 +131,9 @@ class Agent(pygame.sprite.Sprite):
 
     def set_curr_prio(self, prio):
         self.curr_prio = prio
+
+    def get_curr_prio(self):
+        return self.curr_prio
 
     def get_work_prio(self):
         return self.work_prio
@@ -190,7 +196,6 @@ class Business(pygame.sprite.Sprite):
         if self.product_amount > 0:
             self.money = self.money + self.sell_price
             self.product_amount = self.product_amount - 1
-            print('kaching')
 
     def give_profits(self):
         self.worker.gain_money(self.money)
@@ -200,9 +205,7 @@ class Business(pygame.sprite.Sprite):
         current_worker = None
         prio = -1000
         for x in agents:
-            print(x.get_work_prio())
-            if x.get_work_prio() > prio:
-                print('here')
+            if x.get_work_prio() > prio and x.get_curr_prio() != 'work':
                 current_worker = x
                 prio = x.get_work_prio()
         current_worker.set_worker()
@@ -241,9 +244,9 @@ homes = pygame.sprite.Group()
 agents = pygame.sprite.Group()
 businesses = pygame.sprite.Group()
 
-num_homes = 5
-num_agents = 5
-num_businesses = 1
+num_homes = 10
+num_agents = 10
+num_businesses = 3
 i = 0
 while i < num_homes:
     create_home()
@@ -294,6 +297,8 @@ while running:
         for x in agents:
             if x.type == 0:
                 x.update(businesses)
+
+
         all_consumers_at_home = True
         for x in agents:
             if x.type == 0:
