@@ -167,6 +167,7 @@ class Agent(pygame.sprite.Sprite):
                 prio_options.append(x)
         index = random.randint(0, len(prio_options) - 1)
         self.curr_prio = prio_options[index]
+
     def set_curr_prio(self, prio):
         self.curr_prio = prio
 
@@ -219,7 +220,7 @@ class Business(pygame.sprite.Sprite):
         self.rect.center = find_business_location()
         self.product_amount = 12
         self.product_type = type
-        self.sell_price = 5
+        self.sell_price = random.randint(5, 10)
         self.money = 0
         self.production_amount = 8
         self.is_worked = False
@@ -302,7 +303,7 @@ homes = pygame.sprite.Group()
 agents = pygame.sprite.Group()
 businesses = pygame.sprite.Group()
 
-num_homes = 45
+num_homes = 40
 num_agents = 40
 num_businesses = 10
 i = 0
@@ -395,6 +396,7 @@ while running:
                 if num_agents < num_homes:
                     create_agent()
                     x.food = x.food - 10
+                    num_homes = num_homes - 1
             if x.food < 0:
                 x.home.owned = False
                 x.kill()
@@ -405,6 +407,6 @@ while running:
 
     for entity in all_sprites:
         screen.blit(entity.surf, entity.rect)
-    clock.tick(400)
+    clock.tick(60)
 
     pygame.display.flip()
