@@ -61,7 +61,8 @@ class Agent(pygame.sprite.Sprite):
         self.size = 15
         self.speed = 1
         self.objective = 0
-        self.food = 0
+        self.food = random.randint(5, 10)
+        self.water = random.randint(5, 10)
         self.money = 100
         self.surf = pygame.Surface((self.size, self.size))
         self.surf.fill((random.randint(0, 200), random.randint(0, 200), random.randint(0, 200)))
@@ -70,6 +71,7 @@ class Agent(pygame.sprite.Sprite):
         self.destination = self.home
         self.at_home = True
         self.type = 0
+        self.options = []
         if self.home is None:
             self.rect.center = (0, 0)
         else:
@@ -80,28 +82,36 @@ class Agent(pygame.sprite.Sprite):
 
         self.prio_list = {
             'food': 20 - self.food,
+            'water': 20 - self.water
         }
 
     def update(self, businesses):
 
-        if self.curr_prio == 'food':
-            for x in businesses:
-                if x.product_type == 'food':
-                    self.destination = x
-            if self.rect.colliderect(self.destination):
-                self.buy(self.destination)
-                # right here - make buy return true if success false otherwise, add logic for deciding where to go next ie find business with product available and lowest price
-                self.curr_prio = 'home'
-
         if self.curr_prio == 'home':
             self.destination = self.home
-        if self.curr_prio == 'work':
+        elif self.curr_prio == 'work':
             for x in businesses:
                 if x.being_worked() is False:
                     self.destination = x
-                    print(self.destination)
                     x.set_worked(True)
                     break
+        else:
+            if len(self.options) != 0:
+                min_price = 100000
+                best_option = None
+                for x in self.options:
+                    if x.get_sell_price() < min_price:
+                        min_price = x.get_sell_price()
+                        best_option = x
+                self.destination = best_option
+                if self.rect.colliderect(self.destination.rect):
+                    if self.buy(self.destination):
+                        self.curr_prio = 'home'
+                        self.options.clear()
+                    else:
+                        self.options.pop(0)
+            else:
+                self.curr_prio = 'home'
 
         self.move()
 
@@ -110,11 +120,26 @@ class Agent(pygame.sprite.Sprite):
         else:
             self.at_home = False
 
+    def determine_business(self, businesses):
+        for x in businesses:
+            if x.product_type == self.curr_prio:
+                self.options.append(x)
 
     def buy(self, business):
-        if self.money >= business.get_sell_price():
-            self.spend_money(business.get_sell_price())
-            business.sell()
+        num_purchases = 4
+        success = False
+        while num_purchases > 0:
+            if self.money >= business.get_sell_price():
+                if business.sell():
+                    success = True
+                    self.spend_money(business.get_sell_price())
+                    if business.product_type == 'food':
+                        self.food = self.food + 1
+                    if business.product_type == 'water':
+                        self.water = self.water + 1
+
+            num_purchases = num_purchases - 1
+        return success
 
     def spend_money(self, amount):
         self.money = self.money - amount
@@ -123,12 +148,25 @@ class Agent(pygame.sprite.Sprite):
         self.money = self.money + amount
 
     def calc_prios(self):
+        print(self.food, self.water, self.money)
         self.prio_list['food'] = 20 - self.food
+        self.prio_list['water'] = 20 - self.water
         self.work_prio = 100 - self.money
 
-    def get_highest_prio(self):
-        self.curr_prio = max(self.prio_list, key=self.prio_list.get)
+    def lose_products(self):
+        self.food = self.food - 1
+        self.water = self.water - 1
 
+    def get_highest_prio(self):
+        prio_options = ['food']
+        for x in self.prio_list:
+            if self.prio_list.get(x) > self.prio_list[prio_options[0]]:
+                prio_options.clear()
+                prio_options.append(x)
+            elif self.prio_list.get(x) == self.prio_list[prio_options[0]]:
+                prio_options.append(x)
+        index = random.randint(0, len(prio_options) - 1)
+        self.curr_prio = prio_options[index]
     def set_curr_prio(self, prio):
         self.curr_prio = prio
 
@@ -179,14 +217,21 @@ class Business(pygame.sprite.Sprite):
         self.surf.fill((random.randint(0, 200), random.randint(0, 200), random.randint(0, 200)))
         self.rect = self.surf.get_rect()
         self.rect.center = find_business_location()
-        self.product_amount = 20
+        self.product_amount = 12
         self.product_type = type
         self.sell_price = 5
         self.money = 0
+        self.production_amount = 8
         self.is_worked = False
         self.worker = None
 
     def update(self):
+        if self.product_type == 'food':
+            self.surf.fill((255, 0, 0))
+        elif self.product_type == 'water':
+            self.surf.fill((0, 255, 0))
+        else:
+            self.surf.fill((0, 0, 255))
         return
 
     def get_sell_price(self):
@@ -196,10 +241,15 @@ class Business(pygame.sprite.Sprite):
         if self.product_amount > 0:
             self.money = self.money + self.sell_price
             self.product_amount = self.product_amount - 1
+            return True
+        return False
 
     def give_profits(self):
         self.worker.gain_money(self.money)
         self.money = 0
+
+    def produce(self):
+        self.product_amount = self.product_amount + self.production_amount
 
     def find_worker(self, agents):
         current_worker = None
@@ -221,6 +271,14 @@ class Business(pygame.sprite.Sprite):
     def clear_worker(self):
         self.worker = None
         self.is_worked = False
+
+    def price_change(self):
+        if self.product_amount > 0:
+            self.sell_price = self.sell_price - 1
+            print("decrease", self.sell_price)
+        else:
+            self.sell_price = self.sell_price + 1
+            print("increase", self.sell_price)
 
 
 class Home(pygame.sprite.Sprite):
@@ -244,9 +302,9 @@ homes = pygame.sprite.Group()
 agents = pygame.sprite.Group()
 businesses = pygame.sprite.Group()
 
-num_homes = 10
-num_agents = 10
-num_businesses = 3
+num_homes = 45
+num_agents = 40
+num_businesses = 10
 i = 0
 while i < num_homes:
     create_home()
@@ -257,7 +315,10 @@ while i < num_agents:
     i = i + 1
 i = 0
 while i < num_businesses:
-    create_business('food')
+    if random.randint(0, 1) == 0:
+        create_business('food')
+    else:
+        create_business('water')
     i = i + 1
 
 phase = 0
@@ -293,11 +354,12 @@ while running:
                 x.rect.center = x.destination.rect.center
         if all_agents_at_work is True:
             phase = 2
+            for x in agents:
+                x.determine_business(businesses)
     elif phase == 2:
         for x in agents:
             if x.type == 0:
                 x.update(businesses)
-
 
         all_consumers_at_home = True
         for x in agents:
@@ -320,11 +382,23 @@ while running:
         for x in businesses:
             x.give_profits()
             x.clear_worker()
+            x.price_change()
+            x.produce()
+            print(x.product_amount, x.product_type)
         for x in agents:
             x.calc_prios()
             x.set_consumer()
             x.set_curr_prio('')
-            type = 0
+            x.lose_products()
+            x.type = 0
+            if x.food > 15:
+                if num_agents < num_homes:
+                    create_agent()
+                    x.food = x.food - 10
+            if x.food < 0:
+                x.home.owned = False
+                x.kill()
+        print('new day')
         phase = 0
 
     screen.fill((255, 255, 255))
