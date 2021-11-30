@@ -1,5 +1,8 @@
 # Richie Pajak independent study
 
+import csv
+import os
+import pandas as pd
 import pygame
 import random
 
@@ -167,7 +170,6 @@ class Agent(pygame.sprite.Sprite):
                 prio_options.append(x)
         index = random.randint(0, len(prio_options) - 1)
         self.curr_prio = prio_options[index]
-
     def set_curr_prio(self, prio):
         self.curr_prio = prio
 
@@ -220,9 +222,9 @@ class Business(pygame.sprite.Sprite):
         self.rect.center = find_business_location()
         self.product_amount = 12
         self.product_type = type
-        self.sell_price = random.randint(5, 10)
+        self.sell_price = 5
         self.money = 0
-        self.production_amount = 8
+        self.production_amount = 10
         self.is_worked = False
         self.worker = None
 
@@ -250,7 +252,7 @@ class Business(pygame.sprite.Sprite):
         self.money = 0
 
     def produce(self):
-        self.product_amount = self.product_amount + self.production_amount
+        self.product_amount = self.production_amount
 
     def find_worker(self, agents):
         current_worker = None
@@ -275,8 +277,9 @@ class Business(pygame.sprite.Sprite):
 
     def price_change(self):
         if self.product_amount > 0:
-            self.sell_price = self.sell_price - 1
-            print("decrease", self.sell_price)
+            if self.sell_price > 1:
+                self.sell_price = self.sell_price - 1
+                print("decrease", self.sell_price)
         else:
             self.sell_price = self.sell_price + 1
             print("increase", self.sell_price)
@@ -303,24 +306,38 @@ homes = pygame.sprite.Group()
 agents = pygame.sprite.Group()
 businesses = pygame.sprite.Group()
 
-num_homes = 40
+filename = "selectiondata.csv"
+f = open(filename, "w+")
+f.close()
+
+with open('selectiondata.csv', 'a', newline='') as csvfile:
+    mywriter = csv.writer(csvfile, delimiter=',', lineterminator='\n')
+    mywriter.writerow(('average food price', 'average water price'))
+
+
+num_homes = 45
 num_agents = 40
 num_businesses = 10
+num_food_businesses = 0
+num_water_businesses = 0
+day_count = 0
 i = 0
 while i < num_homes:
     create_home()
-    i = i + 1
+    i += 1
 i = 0
 while i < num_agents:
     create_agent()
-    i = i + 1
+    i +=1
 i = 0
 while i < num_businesses:
     if random.randint(0, 1) == 0:
         create_business('food')
+        num_food_businesses += 1
     else:
         create_business('water')
-    i = i + 1
+        num_water_businesses += 1
+    i += 1
 
 phase = 0
 all_consumers_at_home = True
@@ -333,9 +350,18 @@ while running:
         if event.type == KEYDOWN:
             if event.key == K_ESCAPE:
                 running = False
+                filepath = os.path.dirname(os.path.abspath(__file__))
+
+                read_file = pd.read_csv(filepath + '\selectiondata.csv')
+                read_file.to_excel(filepath + '\selectiondata.xlsx', index=None, header=True)
         elif event.type == QUIT:
             running = False
+            filepath = os.path.dirname(os.path.abspath(__file__))
+
+            read_file = pd.read_csv(filepath + '\selectiondata.csv')
+            read_file.to_excel(filepath + '\selectiondata.xlsx', index=None, header=True)
     if phase == 0:
+        day_count += 1
         for x in agents:
             x.get_highest_prio()
         for x in businesses:
@@ -380,11 +406,17 @@ while running:
         if all_agents_at_home:
             phase = 4
     elif phase == 4:
+        food_sum = 0
+        water_sum = 0
         for x in businesses:
             x.give_profits()
             x.clear_worker()
             x.price_change()
             x.produce()
+            if x.product_type == 'food':
+                food_sum += x.sell_price
+            else:
+                water_sum += x.sell_price
             print(x.product_amount, x.product_type)
         for x in agents:
             x.calc_prios()
@@ -392,21 +424,28 @@ while running:
             x.set_curr_prio('')
             x.lose_products()
             x.type = 0
-            if x.food > 15:
-                if num_agents < num_homes:
-                    create_agent()
-                    x.food = x.food - 10
-                    num_homes = num_homes - 1
-            if x.food < 0:
-                x.home.owned = False
-                x.kill()
-        print('new day')
+            #if x.food > 15:
+                #if num_agents < num_homes:
+                    #create_agent()
+                    #x.food = x.food - 10
+            #if x.food < 0:
+                #x.home.owned = False
+                #x.kill()
+        food_average = food_sum / num_food_businesses
+        water_average = water_sum / num_water_businesses
+        with open('selectiondata.csv', 'a', newline='') as csvfile:
+            spamwriter = csv.writer(csvfile, delimiter=',', lineterminator='\n')
+            spamwriter.writerow((food_average, water_average))
+        print('food:', food_average)
+        print('water:', water_average)
         phase = 0
 
     screen.fill((255, 255, 255))
 
     for entity in all_sprites:
         screen.blit(entity.surf, entity.rect)
-    clock.tick(60)
+    img = font.render(str(day_count), True, (0, 0, 0))
+    screen.blit(img, (20, 20))
+    clock.tick(1000)
 
     pygame.display.flip()
