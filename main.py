@@ -62,30 +62,29 @@ class Agent(pygame.sprite.Sprite):
     def __init__(self):
         super(Agent, self).__init__()
         self.size = 15
-        self.speed = 1
-        self.objective = 0
-        self.food = random.randint(5, 10)
-        self.water = random.randint(5, 10)
-        self.money = 100
         self.surf = pygame.Surface((self.size, self.size))
         self.surf.fill((random.randint(0, 200), random.randint(0, 200), random.randint(0, 200)))
         self.rect = self.surf.get_rect()
+        self.food = random.randint(5, 10)
+        self.water = random.randint(5, 10)
+        self.money = 100
         self.home = find_empty_home()
         self.destination = self.home
         self.at_home = True
-        self.type = 0
-        self.options = []
+        self.consumer = True
+        self.business_options = []
+
         if self.home is None:
             self.rect.center = (0, 0)
         else:
             self.rect.center = self.home.rect.center
         self.curr_prio = None
 
-        self.work_prio = 100 - self.money
+        self.work_prio = -1 * self.money
 
         self.prio_list = {
-            'food': 20 - self.food,
-            'water': 20 - self.water
+            'food': -1 * self.food,
+            'water': -1 * self.water
         }
 
     def update(self, businesses):
@@ -99,20 +98,24 @@ class Agent(pygame.sprite.Sprite):
                     x.set_worked(True)
                     break
         else:
-            if len(self.options) != 0:
-                min_price = 100000
+            if len(self.business_options) != 0:
+                min_price = float('inf')
                 best_option = None
-                for x in self.options:
+                for x in self.business_options:
                     if x.get_sell_price() < min_price:
-                        min_price = x.get_sell_price()
-                        best_option = x
+                        if x.get_product_amount() > 0:
+                            min_price = x.get_sell_price()
+                            best_option = x
+                if best_option is None:
+                    best_option = self.home
+                    self.curr_prio = 'home'
                 self.destination = best_option
                 if self.rect.colliderect(self.destination.rect):
                     if self.buy(self.destination):
                         self.curr_prio = 'home'
-                        self.options.clear()
+                        self.business_options.clear()
                     else:
-                        self.options.pop(0)
+                        self.business_options.pop(0)
             else:
                 self.curr_prio = 'home'
 
@@ -126,7 +129,7 @@ class Agent(pygame.sprite.Sprite):
     def determine_business(self, businesses):
         for x in businesses:
             if x.product_type == self.curr_prio:
-                self.options.append(x)
+                self.business_options.append(x)
 
     def buy(self, business):
         num_purchases = 4
@@ -170,6 +173,7 @@ class Agent(pygame.sprite.Sprite):
                 prio_options.append(x)
         index = random.randint(0, len(prio_options) - 1)
         self.curr_prio = prio_options[index]
+
     def set_curr_prio(self, prio):
         self.curr_prio = prio
 
@@ -180,10 +184,10 @@ class Agent(pygame.sprite.Sprite):
         return self.work_prio
 
     def set_worker(self):
-        self.type = 1
+        self.consumer = False
 
     def set_consumer(self):
-        self.type = 0
+        self.consumer = True
 
     def is_at_home(self):  # This is a getter function for the variable at_home
         if self.at_home is True:
@@ -200,13 +204,13 @@ class Agent(pygame.sprite.Sprite):
         direction_x = 0
         direction_y = 0
         if self.rect.centerx < x:
-            direction_x = self.speed
+            direction_x = 1
         if self.rect.centerx > x:
-            direction_x = -self.speed
+            direction_x = -1
         if self.rect.centery < y:
-            direction_y = self.speed
+            direction_y = 1
         if self.rect.centery > y:
-            direction_y = -self.speed
+            direction_y = -1
 
         direction = (direction_x, direction_y)
         return direction
@@ -239,6 +243,9 @@ class Business(pygame.sprite.Sprite):
 
     def get_sell_price(self):
         return self.sell_price
+
+    def get_product_amount(self):
+        return self.product_amount
 
     def sell(self):
         if self.product_amount > 0:
@@ -314,8 +321,7 @@ with open('selectiondata.csv', 'a', newline='') as csvfile:
     mywriter = csv.writer(csvfile, delimiter=',', lineterminator='\n')
     mywriter.writerow(('average food price', 'average water price'))
 
-
-num_homes = 45
+num_homes = 40
 num_agents = 40
 num_businesses = 10
 num_food_businesses = 0
@@ -328,7 +334,7 @@ while i < num_homes:
 i = 0
 while i < num_agents:
     create_agent()
-    i +=1
+    i += 1
 i = 0
 while i < num_businesses:
     if random.randint(0, 1) == 0:
@@ -370,14 +376,14 @@ while running:
     elif phase == 1:
         businesses.update()
         for x in agents:
-            if x.type == 1:
+            if x.consumer == False:
                 x.update(businesses)
         all_agents_at_work = True
         for x in agents:
-            if x.type == 1 and not x.rect.colliderect(x.destination.rect):
+            if x.consumer == False and not x.rect.colliderect(x.destination.rect):
                 all_agents_at_work = False
         for x in agents:
-            if x.rect.colliderect(x.destination.rect) and x.type == 1:
+            if x.rect.colliderect(x.destination.rect) and x.consumer == False:
                 x.rect.center = x.destination.rect.center
         if all_agents_at_work is True:
             phase = 2
@@ -385,12 +391,12 @@ while running:
                 x.determine_business(businesses)
     elif phase == 2:
         for x in agents:
-            if x.type == 0:
+            if x.consumer:
                 x.update(businesses)
 
         all_consumers_at_home = True
         for x in agents:
-            if x.type == 0:
+            if x.consumer:
                 if x.is_at_home() is False:
                     all_consumers_at_home = False
         if all_consumers_at_home:
@@ -424,13 +430,13 @@ while running:
             x.set_curr_prio('')
             x.lose_products()
             x.type = 0
-            #if x.food > 15:
-                #if num_agents < num_homes:
-                    #create_agent()
-                    #x.food = x.food - 10
-            #if x.food < 0:
-                #x.home.owned = False
-                #x.kill()
+            # if x.food > 15:
+            # if num_agents < num_homes:
+            # create_agent()
+            # x.food = x.food - 10
+            # if x.food < 0:
+            # x.home.owned = False
+            # x.kill()
         food_average = food_sum / num_food_businesses
         water_average = water_sum / num_water_businesses
         with open('selectiondata.csv', 'a', newline='') as csvfile:
@@ -446,6 +452,6 @@ while running:
         screen.blit(entity.surf, entity.rect)
     img = font.render(str(day_count), True, (0, 0, 0))
     screen.blit(img, (20, 20))
-    clock.tick(1000)
+    clock.tick()
 
     pygame.display.flip()
