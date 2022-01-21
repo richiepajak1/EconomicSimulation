@@ -78,6 +78,7 @@ class Agent(pygame.sprite.Sprite):
             self.rect.center = (0, 0)
         else:
             self.rect.center = self.home.rect.center
+
         self.curr_prio = None
 
         self.work_prio = -1 * self.money
@@ -313,13 +314,7 @@ homes = pygame.sprite.Group()
 agents = pygame.sprite.Group()
 businesses = pygame.sprite.Group()
 
-filename = "selectiondata.csv"
-f = open(filename, "w+")
-f.close()
 
-with open('selectiondata.csv', 'a', newline='') as csvfile:
-    mywriter = csv.writer(csvfile, delimiter=',', lineterminator='\n')
-    mywriter.writerow(('average food price', 'average water price'))
 
 num_homes = 40
 num_agents = 40
@@ -350,6 +345,35 @@ all_consumers_at_home = True
 all_agents_at_work = True
 all_agents_at_home = True
 
+filename = "selectiondata.csv"
+f = open(filename, "w+")
+f.close()
+
+filename = "sagentdata.csv"
+f = open(filename, "w+")
+f.close()
+
+with open('selectiondata.csv', 'a', newline='') as csvfile:
+    mywriter = csv.writer(csvfile, delimiter=',', lineterminator='\n')
+    mywriter.writerow(('average food price', 'average water price'))
+
+header = []
+for x in range(0, num_agents):
+    header.append('Agent_{}'.format(x))
+    header.append('Agent_{}'.format(x))
+    header.append('Agent_{}'.format(x))
+
+header2 = []
+for x in range(0, num_agents):
+    header2.append('Money')
+    header2.append('Food')
+    header2.append('Water')
+
+with open('sagentdata.csv', 'a', newline='') as csvfile:
+    mywriter = csv.writer(csvfile, delimiter=',', lineterminator='\n')
+    mywriter.writerow(header)
+    mywriter.writerow(header2)
+
 running = True
 while running:
     for event in pygame.event.get():
@@ -360,12 +384,16 @@ while running:
 
                 read_file = pd.read_csv(filepath + '\selectiondata.csv')
                 read_file.to_excel(filepath + '\selectiondata.xlsx', index=None, header=True)
+                read_file2 = pd.read_csv(filepath +'\sagentdata.csv')
+                read_file2.to_excel(filepath + '\sagentdata.xlsx', index=None, header=True)
         elif event.type == QUIT:
             running = False
             filepath = os.path.dirname(os.path.abspath(__file__))
 
             read_file = pd.read_csv(filepath + '\selectiondata.csv')
             read_file.to_excel(filepath + '\selectiondata.xlsx', index=None, header=True)
+            read_file2 = pd.read_csv(filepath + '\sagentdata.csv')
+            read_file2.to_excel(filepath + '\sagentdata.xlsx', index=None, header=True)
     if phase == 0:
         day_count += 1
         for x in agents:
@@ -440,8 +468,18 @@ while running:
         food_average = food_sum / num_food_businesses
         water_average = water_sum / num_water_businesses
         with open('selectiondata.csv', 'a', newline='') as csvfile:
-            spamwriter = csv.writer(csvfile, delimiter=',', lineterminator='\n')
-            spamwriter.writerow((food_average, water_average))
+            csv_writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
+            csv_writer.writerow((food_average, water_average))
+
+        row = []
+        for x in agents:
+            row.append(x.money)
+            row.append(x.food)
+            row.append(x.water)
+        with open('sagentdata.csv', 'a', newline='') as csvfile:
+            csv_writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
+            csv_writer.writerow(row)
+
         print('food:', food_average)
         print('water:', water_average)
         phase = 0
