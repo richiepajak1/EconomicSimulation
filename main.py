@@ -5,6 +5,8 @@ import os
 import pandas as pd
 import pygame
 import random
+import tkinter as tk
+
 
 from pygame.locals import (
     K_ESCAPE,
@@ -13,7 +15,7 @@ from pygame.locals import (
 )
 
 SCREEN_WIDTH = 1500
-SCREEN_HEIGHT = 1000
+SCREEN_HEIGHT = 900
 
 
 def find_empty_home():
@@ -232,6 +234,7 @@ class Business(pygame.sprite.Sprite):
         self.production_amount = 10
         self.is_worked = False
         self.worker = None
+        self.can_be_worked = True
 
     def update(self):
         if self.product_type == 'food':
@@ -256,22 +259,26 @@ class Business(pygame.sprite.Sprite):
         return False
 
     def give_profits(self):
-        self.worker.gain_money(self.money)
-        self.money = 0
+        if self.can_be_worked:
+           self.worker.gain_money(self.money)
+           self.money = 0
 
     def produce(self):
-        self.product_amount = self.production_amount
+        if self.can_be_worked:
+            self.product_amount = self.production_amount
 
     def find_worker(self, agents):
-        current_worker = None
-        prio = -1000
-        for x in agents:
-            if x.get_work_prio() > prio and x.get_curr_prio() != 'work':
-                current_worker = x
-                prio = x.get_work_prio()
-        current_worker.set_worker()
-        current_worker.set_curr_prio('work')
-        return current_worker
+        if self.can_be_worked:
+            current_worker = None
+            prio = -1000
+            for x in agents:
+                if x.get_work_prio() > prio and x.get_curr_prio() != 'work':
+                    current_worker = x
+                    prio = x.get_work_prio()
+            current_worker.set_worker()
+            current_worker.set_curr_prio('work')
+            return current_worker
+        return None
 
     def being_worked(self):
         return self.is_worked
@@ -293,6 +300,7 @@ class Business(pygame.sprite.Sprite):
             print("increase", self.sell_price)
 
     def set_production_amount(self, amount):
+        amount /= 100
         self.production_amount *= amount
 
     def reset_production_amount(self):
@@ -310,19 +318,121 @@ class Home(pygame.sprite.Sprite):
         self.rect.center = find_home_location()
 
 
-#def covid():
+disaster_stats = {
+    'disaster_type': '',
+    'disaster_start_day': 0,
+    'disaster_end_day': 0,
+    'disaster_severity': 0
+}
 
-#def drought():
+print(disaster_stats)
 
-#def hurricane():
-
-#def tornado():
-
-#def stimulus():
-
-#def aid():
+relief_stats = {
+    'relief_type': '',
+    'relief_start_day': 0,
+    'relief_severity': 0
+}
 
 
+def disaster_apply():
+    disaster_stats['disaster_type'] = dropdown_result.get()
+    disaster_stats['disaster_start_day'] = int(e1.get())
+    disaster_stats['disaster_end_day'] = int(e2.get())
+    disaster_stats['disaster_severity'] = int(e3.get())
+    print(disaster_stats)
+
+
+def relief_apply():
+    relief_stats['relief_type'] = dropdown_result.get()
+    relief_stats['relief_start_day'] = int(e4.get())
+    relief_stats['relief_severity'] = int(e5.get())
+
+
+disaster_menu = tk.Tk()
+tk.Label(disaster_menu, text="Disaster Type").grid(row=0)
+tk.Label(disaster_menu, text="Disaster Start Day").grid(row=1)
+tk.Label(disaster_menu, text="Disaster End Day").grid(row=2)
+tk.Label(disaster_menu, text="Disaster Severity").grid(row=3)
+
+disaster_list = [
+    'None',
+    'Pandemic',
+    'Hurricane',
+    'Drought',
+    'Tornado',
+]
+
+dropdown_result = tk.StringVar(disaster_menu)
+dropdown_result.set(disaster_list[0]) # default value
+
+disaster_dropdown = tk.OptionMenu(disaster_menu, dropdown_result, *disaster_list)
+
+e1 = tk.Entry(disaster_menu)
+e2 = tk.Entry(disaster_menu)
+e3 = tk.Entry(disaster_menu)
+e1.insert(10, '0')
+e2.insert(10, '0')
+e3.insert(10, '0')
+
+disaster_dropdown.grid(row=0, column=1)
+e1.grid(row=1, column=1)
+e2.grid(row=2, column=1)
+e3.grid(row=3, column=1)
+
+
+tk.Button(disaster_menu, text='Apply', command=disaster_apply).grid(row=6,
+                                                           column=0,
+                                                           sticky=tk.W,
+                                                           pady=4)
+tk.Button(disaster_menu,
+          text='Next',
+          command=disaster_menu.quit).grid(row=6,
+                                           column=1,
+                                           sticky=tk.W,
+                                           pady=4)
+
+disaster_menu.mainloop()
+
+relief_menu = tk.Tk()
+
+tk.Label(relief_menu, text="Relief Type").grid(row=0)
+tk.Label(relief_menu, text="Relief Day").grid(row=1)
+tk.Label(relief_menu, text="Relief Amount").grid(row=2)
+
+relief_list = [
+    'None',
+    'Stimulus',
+    'Aid'
+]
+
+dropdown_result = tk.StringVar(relief_menu)
+dropdown_result.set(relief_list[0]) # default value
+
+relief_dropdown = tk.OptionMenu(relief_menu, dropdown_result, *relief_list)
+
+e4 = tk.Entry(relief_menu)
+e5 = tk.Entry(relief_menu)
+e4.insert(10, '0')
+e5.insert(10, '0')
+
+relief_dropdown.grid(row=0, column=1)
+e4.grid(row=1, column=1)
+e5.grid(row=2, column=1)
+
+tk.Button(relief_menu, text='Apply', command=relief_apply).grid(row=6,
+                                                           column=0,
+                                                           sticky=tk.W,
+                                                           pady=4)
+tk.Button(relief_menu,
+          text='Next',
+          command=relief_menu.quit).grid(row=6,
+                                           column=1,
+                                           sticky=tk.W,
+                                           pady=4)
+
+relief_menu.mainloop()
+
+tk.mainloop()
 
 
 
@@ -345,9 +455,6 @@ num_businesses = 10
 num_food_businesses = 0
 num_water_businesses = 0
 day_count = 0
-disaster_day = 0
-disaster_type = ''
-disaster_severity = 0.0
 i = 0
 while i < num_homes:
     create_home()
@@ -509,10 +616,35 @@ while running:
         print('food:', food_average)
         print('water:', water_average)
 
-        if day_count > disaster_day:
-            if disaster_type == 'covid':
+        if day_count == disaster_stats['disaster_start_day']:
+            if disaster_stats['disaster_type'] == 'Pandemic':
+                businesses_closed = 0
                 for x in businesses:
-                    x.set_production_amount(disaster_severity)
+                    if businesses_closed < disaster_stats['disaster_severity']:
+                        x.can_be_worked = False
+                        businesses_closed += 1
+
+            if disaster_stats['disaster_type'] == 'Hurricane':
+                for x in businesses:
+                    if x.product_type == 'food':
+                        x.set_production_amount(disaster_stats['disaster_severity'])
+
+            if disaster_stats['disaster_type'] == 'Drought':
+                for x in businesses:
+                    if x.product_type == 'water':
+                        x.set_production_amount(disaster_stats['disaster_severity'])
+
+            if disaster_stats['disaster_type'] == 'Drought':
+                for x in businesses:
+                    x.set_production_amount(disaster_stats['disaster_severity'])
+
+        if day_count == disaster_stats['disaster_end_day']:
+            if disaster_stats['disaster_type'] == 'Pandemic':
+                for x in businesses:
+                    x.can_be_worked = True
+            if disaster_stats['disaster_type'] == 'Hurricane' or disaster_stats['disaster_type'] == 'Drought' or disaster_stats['disaster_type'] == 'Tornado':
+                for x in businesses:
+                    x.reset_production_amount()
 
         phase = 0
 
