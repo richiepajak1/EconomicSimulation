@@ -292,6 +292,12 @@ class Business(pygame.sprite.Sprite):
             self.sell_price = self.sell_price + 1
             print("increase", self.sell_price)
 
+    def set_production_amount(self, amount):
+        self.production_amount *= amount
+
+    def reset_production_amount(self):
+        self.production_amount = 10
+
 
 class Home(pygame.sprite.Sprite):
     def __init__(self):
@@ -302,6 +308,23 @@ class Home(pygame.sprite.Sprite):
         self.rect = self.surf.get_rect()
         self.owned = False
         self.rect.center = find_home_location()
+
+
+#def covid():
+
+#def drought():
+
+#def hurricane():
+
+#def tornado():
+
+#def stimulus():
+
+#def aid():
+
+
+
+
 
 
 pygame.init()
@@ -322,6 +345,9 @@ num_businesses = 10
 num_food_businesses = 0
 num_water_businesses = 0
 day_count = 0
+disaster_day = 0
+disaster_type = ''
+disaster_severity = 0.0
 i = 0
 while i < num_homes:
     create_home()
@@ -482,6 +508,12 @@ while running:
 
         print('food:', food_average)
         print('water:', water_average)
+
+        if day_count > disaster_day:
+            if disaster_type == 'covid':
+                for x in businesses:
+                    x.set_production_amount(disaster_severity)
+
         phase = 0
 
     screen.fill((255, 255, 255))
