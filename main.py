@@ -163,8 +163,11 @@ class Agent(pygame.sprite.Sprite):
         self.work_prio = 100 - self.money
 
     def lose_products(self):
-        self.food = self.food - 1
-        self.water = self.water - 1
+        if self.food > 0:
+            self.food = self.food - 1
+        if self.water > 0:
+            self.water = self.water - 1
+
 
     def get_highest_prio(self):
         prio_options = ['food']
@@ -409,7 +412,6 @@ dropdown_result = tk.StringVar(relief_menu)
 dropdown_result.set(relief_list[0]) # default value
 
 relief_dropdown = tk.OptionMenu(relief_menu, dropdown_result, *relief_list)
-
 e4 = tk.Entry(relief_menu)
 e5 = tk.Entry(relief_menu)
 e4.insert(10, '0')
@@ -654,6 +656,6 @@ while running:
         screen.blit(entity.surf, entity.rect)
     img = font.render(str(day_count), True, (0, 0, 0))
     screen.blit(img, (20, 20))
-    clock.tick()
+    clock.tick(1000)
 
     pygame.display.flip()
