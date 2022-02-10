@@ -7,7 +7,6 @@ import pygame
 import random
 import tkinter as tk
 
-
 from pygame.locals import (
     K_ESCAPE,
     KEYDOWN,
@@ -168,7 +167,6 @@ class Agent(pygame.sprite.Sprite):
         if self.water > 0:
             self.water = self.water - 1
 
-
     def get_highest_prio(self):
         prio_options = ['food']
         for x in self.prio_list:
@@ -263,8 +261,8 @@ class Business(pygame.sprite.Sprite):
 
     def give_profits(self):
         if self.can_be_worked:
-           self.worker.gain_money(self.money)
-           self.money = 0
+            self.worker.gain_money(self.money)
+            self.money = 0
 
     def produce(self):
         if self.can_be_worked:
@@ -273,7 +271,7 @@ class Business(pygame.sprite.Sprite):
     def find_worker(self, agents):
         if self.can_be_worked:
             current_worker = None
-            prio = -1000
+            prio = float('-inf')
             for x in agents:
                 if x.get_work_prio() > prio and x.get_curr_prio() != 'work':
                     current_worker = x
@@ -366,7 +364,7 @@ disaster_list = [
 ]
 
 dropdown_result = tk.StringVar(disaster_menu)
-dropdown_result.set(disaster_list[0]) # default value
+dropdown_result.set(disaster_list[0])  # default value
 
 disaster_dropdown = tk.OptionMenu(disaster_menu, dropdown_result, *disaster_list)
 
@@ -382,11 +380,10 @@ e1.grid(row=1, column=1)
 e2.grid(row=2, column=1)
 e3.grid(row=3, column=1)
 
-
 tk.Button(disaster_menu, text='Apply', command=disaster_apply).grid(row=6,
-                                                           column=0,
-                                                           sticky=tk.W,
-                                                           pady=4)
+                                                                    column=0,
+                                                                    sticky=tk.W,
+                                                                    pady=4)
 tk.Button(disaster_menu,
           text='Next',
           command=disaster_menu.quit).grid(row=6,
@@ -409,7 +406,7 @@ relief_list = [
 ]
 
 dropdown_result = tk.StringVar(relief_menu)
-dropdown_result.set(relief_list[0]) # default value
+dropdown_result.set(relief_list[0])  # default value
 
 relief_dropdown = tk.OptionMenu(relief_menu, dropdown_result, *relief_list)
 e4 = tk.Entry(relief_menu)
@@ -422,22 +419,19 @@ e4.grid(row=1, column=1)
 e5.grid(row=2, column=1)
 
 tk.Button(relief_menu, text='Apply', command=relief_apply).grid(row=6,
-                                                           column=0,
-                                                           sticky=tk.W,
-                                                           pady=4)
+                                                                column=0,
+                                                                sticky=tk.W,
+                                                                pady=4)
 tk.Button(relief_menu,
           text='Next',
           command=relief_menu.quit).grid(row=6,
-                                           column=1,
-                                           sticky=tk.W,
-                                           pady=4)
+                                         column=1,
+                                         sticky=tk.W,
+                                         pady=4)
 
 relief_menu.mainloop()
 
 tk.mainloop()
-
-
-
 
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -449,31 +443,23 @@ homes = pygame.sprite.Group()
 agents = pygame.sprite.Group()
 businesses = pygame.sprite.Group()
 
-
-
 num_homes = 40
 num_agents = 40
 num_businesses = 10
 num_food_businesses = 0
 num_water_businesses = 0
 day_count = 0
-i = 0
-while i < num_homes:
+for x in range(0, num_homes):
     create_home()
-    i += 1
-i = 0
-while i < num_agents:
+for x in range(0, num_agents):
     create_agent()
-    i += 1
-i = 0
-while i < num_businesses:
-    if random.randint(0, 1) == 0:
+for x in range(0, num_businesses):
+    if x % 2 == 0:
         create_business('food')
         num_food_businesses += 1
     else:
         create_business('water')
         num_water_businesses += 1
-    i += 1
 
 phase = 0
 all_consumers_at_home = True
@@ -519,7 +505,7 @@ while running:
 
                 read_file = pd.read_csv(filepath + '\selectiondata.csv')
                 read_file.to_excel(filepath + '\selectiondata.xlsx', index=None, header=True)
-                read_file2 = pd.read_csv(filepath +'\sagentdata.csv')
+                read_file2 = pd.read_csv(filepath + '\sagentdata.csv')
                 read_file2.to_excel(filepath + '\sagentdata.xlsx', index=None, header=True)
         elif event.type == QUIT:
             running = False
@@ -539,11 +525,11 @@ while running:
     elif phase == 1:
         businesses.update()
         for x in agents:
-            if x.consumer == False:
+            if not x.consumer:
                 x.update(businesses)
         all_agents_at_work = True
         for x in agents:
-            if x.consumer == False and not x.rect.colliderect(x.destination.rect):
+            if not x.consumer and not x.rect.colliderect(x.destination.rect):
                 all_agents_at_work = False
         for x in agents:
             if x.rect.colliderect(x.destination.rect) and x.consumer == False:
@@ -644,7 +630,8 @@ while running:
             if disaster_stats['disaster_type'] == 'Pandemic':
                 for x in businesses:
                     x.can_be_worked = True
-            if disaster_stats['disaster_type'] == 'Hurricane' or disaster_stats['disaster_type'] == 'Drought' or disaster_stats['disaster_type'] == 'Tornado':
+            if disaster_stats['disaster_type'] == 'Hurricane' or disaster_stats['disaster_type'] == 'Drought' or \
+                    disaster_stats['disaster_type'] == 'Tornado':
                 for x in businesses:
                     x.reset_production_amount()
 
@@ -656,6 +643,6 @@ while running:
         screen.blit(entity.surf, entity.rect)
     img = font.render(str(day_count), True, (0, 0, 0))
     screen.blit(img, (20, 20))
-    clock.tick(1000)
+    clock.tick(10000)
 
     pygame.display.flip()
