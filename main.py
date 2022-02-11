@@ -136,7 +136,7 @@ class Agent(pygame.sprite.Sprite):
     def buy(self, business):
         num_purchases = 4
         success = False
-        while num_purchases > 0:
+        for x in range(0, num_purchases):
             if self.money >= business.get_sell_price():
                 if business.sell():
                     success = True
@@ -145,8 +145,6 @@ class Agent(pygame.sprite.Sprite):
                         self.food = self.food + 1
                     if business.product_type == 'water':
                         self.water = self.water + 1
-
-            num_purchases = num_purchases - 1
         return success
 
     def spend_money(self, amount):
@@ -228,11 +226,11 @@ class Business(pygame.sprite.Sprite):
         self.surf.fill((random.randint(0, 200), random.randint(0, 200), random.randint(0, 200)))
         self.rect = self.surf.get_rect()
         self.rect.center = find_business_location()
-        self.product_amount = 12
+        self.product_amount = 15
         self.product_type = type
         self.sell_price = 5
         self.money = 0
-        self.production_amount = 10
+        self.production_amount = 15
         self.is_worked = False
         self.worker = None
         self.can_be_worked = True
@@ -253,7 +251,7 @@ class Business(pygame.sprite.Sprite):
         return self.product_amount
 
     def sell(self):
-        if self.product_amount > 0:
+        if self.product_amount > 0 and self.can_be_worked:
             self.money = self.money + self.sell_price
             self.product_amount = self.product_amount - 1
             return True
@@ -301,11 +299,12 @@ class Business(pygame.sprite.Sprite):
             print("increase", self.sell_price)
 
     def set_production_amount(self, amount):
-        amount /= 100
-        self.production_amount *= amount
+        amount = float(amount) / 100
+        amount = 1 - amount
+        self.production_amount = int(self.production_amount * amount)
 
     def reset_production_amount(self):
-        self.production_amount = 10
+        self.production_amount = 15
 
 
 class Home(pygame.sprite.Sprite):
@@ -358,7 +357,7 @@ tk.Label(disaster_menu, text="Disaster Severity").grid(row=3)
 disaster_list = [
     'None',
     'Pandemic',
-    'Hurricane',
+    'Famine',
     'Drought',
     'Tornado',
 ]
@@ -612,7 +611,7 @@ while running:
                         x.can_be_worked = False
                         businesses_closed += 1
 
-            if disaster_stats['disaster_type'] == 'Hurricane':
+            if disaster_stats['disaster_type'] == 'Famine':
                 for x in businesses:
                     if x.product_type == 'food':
                         x.set_production_amount(disaster_stats['disaster_severity'])
@@ -630,11 +629,13 @@ while running:
             if disaster_stats['disaster_type'] == 'Pandemic':
                 for x in businesses:
                     x.can_be_worked = True
-            if disaster_stats['disaster_type'] == 'Hurricane' or disaster_stats['disaster_type'] == 'Drought' or \
+            if disaster_stats['disaster_type'] == 'Famine' or disaster_stats['disaster_type'] == 'Drought' or \
                     disaster_stats['disaster_type'] == 'Tornado':
                 for x in businesses:
                     x.reset_production_amount()
 
+        if day_count > 100:
+            running = False
         phase = 0
 
     screen.fill((255, 255, 255))
@@ -643,6 +644,6 @@ while running:
         screen.blit(entity.surf, entity.rect)
     img = font.render(str(day_count), True, (0, 0, 0))
     screen.blit(img, (20, 20))
-    clock.tick(10000)
+    clock.tick()
 
     pygame.display.flip()
