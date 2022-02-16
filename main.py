@@ -531,7 +531,7 @@ while running:
             if not x.consumer and not x.rect.colliderect(x.destination.rect):
                 all_agents_at_work = False
         for x in agents:
-            if x.rect.colliderect(x.destination.rect) and x.consumer == False:
+            if x.rect.colliderect(x.destination.rect) and x.consumer is False:
                 x.rect.center = x.destination.rect.center
         if all_agents_at_work is True:
             phase = 2
