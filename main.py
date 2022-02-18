@@ -142,10 +142,7 @@ class Agent(pygame.sprite.Sprite):
                 if business.sell():
                     success = True
                     self.spend_money(business.get_sell_price())
-                    if business.product_type == 'food':
-                        self.food = self.food + 1
-                    if business.product_type == 'water':
-                        self.water = self.water + 1
+                    self.gain_product(business.product_type, 1)
         return success
 
     def spend_money(self, amount):
@@ -153,6 +150,12 @@ class Agent(pygame.sprite.Sprite):
 
     def gain_money(self, amount):
         self.money = self.money + amount
+
+    def gain_product(self, type, amount):
+        if type == 'food':
+            self.food += amount
+        if type == 'water':
+            self.water += amount
 
     def calc_prios(self):
         print(self.food, self.water, self.money)
@@ -532,7 +535,7 @@ while running:
             if not x.consumer and not x.rect.colliderect(x.destination.rect):
                 all_agents_at_work = False
         for x in agents:
-            if x.rect.colliderect(x.destination.rect) and x.consumer == False:
+            if x.rect.colliderect(x.destination.rect) and x.consumer is False:
                 x.rect.center = x.destination.rect.center
         if all_agents_at_work is True:
             phase = 2
@@ -634,6 +637,15 @@ while running:
                     disaster_stats['disaster_type'] == 'Tornado':
                 for x in businesses:
                     x.reset_production_amount()
+
+        if day_count == relief_stats['relief_start_day']:
+            if relief_stats['relief_type'] == 'Stimulus':
+                for x in agents:
+                    x.gain_money(relief_stats['relief_severity'])
+            if relief_stats['relief_type'] == 'Aid':
+                for x in agents:
+                    x.gain_product('water', relief_stats['relief_severity'])
+                    x.gain_product('food', relief_stats['relief_severity'])
 
         if day_count > 100:
             running = False
