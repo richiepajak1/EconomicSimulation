@@ -16,6 +16,7 @@ from pygame.locals import (
 SCREEN_WIDTH = 1500
 SCREEN_HEIGHT = 900
 
+#comments
 
 def find_empty_home():
     for x in homes:
