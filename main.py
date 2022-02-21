@@ -469,7 +469,7 @@ all_consumers_at_home = True
 all_agents_at_work = True
 all_agents_at_home = True
 
-filename = "selectiondata.csv"
+filename = "simulationdata.csv"
 f = open(filename, "w+")
 f.close()
 
@@ -477,7 +477,7 @@ filename = "agentdata.csv"
 f = open(filename, "w+")
 f.close()
 
-with open('selectiondata.csv', 'a', newline='') as csvfile:
+with open('simulationdata.csv', 'a', newline='') as csvfile:
     mywriter = csv.writer(csvfile, delimiter=',', lineterminator='\n')
     mywriter.writerow(('average food price', 'average water price'))
 
@@ -506,18 +506,18 @@ while running:
                 running = False
                 filepath = os.path.dirname(os.path.abspath(__file__))
 
-                read_file = pd.read_csv(filepath + '\selectiondata.csv')
-                read_file.to_excel(filepath + '\selectiondata.xlsx', index=None, header=True)
-                read_file2 = pd.read_csv(filepath + '\agentdata.csv')
-                read_file2.to_excel(filepath + '\agentdata.xlsx', index=None, header=True)
+                read_file = pd.read_csv(filepath + '/simulationdata.csv')
+                read_file.to_excel(filepath + '/simulationdata.xlsx', index=None, header=True)
+                read_file2 = pd.read_csv(filepath + '/agentdata.csv')
+                read_file2.to_excel(filepath + '/agentdata.xlsx', index=None, header=True)
         elif event.type == QUIT:
             running = False
             filepath = os.path.dirname(os.path.abspath(__file__))
 
-            read_file = pd.read_csv(filepath + '\selectiondata.csv')
-            read_file.to_excel(filepath + '\selectiondata.xlsx', index=None, header=True)
-            read_file2 = pd.read_csv(filepath + '\agentdata.csv')
-            read_file2.to_excel(filepath + '\agentdata.xlsx', index=None, header=True)
+            read_file = pd.read_csv(filepath + '/simulationdata.csv')
+            read_file.to_excel(filepath + '/simulationdata.xlsx', index=None, header=True)
+            read_file2 = pd.read_csv(filepath + '/agentdata.csv')
+            read_file2.to_excel(filepath + '/agentdata.xlsx', index=None, header=True)
     if phase == 0:
         day_count += 1
         for x in agents:
@@ -591,7 +591,7 @@ while running:
             # x.kill()
         food_average = food_sum / num_food_businesses
         water_average = water_sum / num_water_businesses
-        with open('selectiondata.csv', 'a', newline='') as csvfile:
+        with open('simulationdata.csv', 'a', newline='') as csvfile:
             csv_writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
             csv_writer.writerow((food_average, water_average))
 
