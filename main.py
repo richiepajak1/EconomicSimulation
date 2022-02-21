@@ -511,6 +511,7 @@ while running:
                 read_file2 = pd.read_csv(filepath + '/agentdata.csv')
                 read_file2.to_excel(filepath + '/agentdata.xlsx', index=None, header=True)
         elif event.type == QUIT:
+            print('quitting successfully')
             running = False
             filepath = os.path.dirname(os.path.abspath(__file__))
 
@@ -647,8 +648,8 @@ while running:
                     x.gain_product('water', relief_stats['relief_severity'])
                     x.gain_product('food', relief_stats['relief_severity'])
 
-        if day_count > 100:
-            running = False
+        if day_count >= 10:
+            pygame.event.post(pygame.event.Event(QUIT))
         phase = 0
 
     screen.fill((255, 255, 255))
