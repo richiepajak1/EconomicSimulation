@@ -473,7 +473,7 @@ filename = "selectiondata.csv"
 f = open(filename, "w+")
 f.close()
 
-filename = "sagentdata.csv"
+filename = "agentdata.csv"
 f = open(filename, "w+")
 f.close()
 
@@ -493,7 +493,7 @@ for x in range(0, num_agents):
     header2.append('Food')
     header2.append('Water')
 
-with open('sagentdata.csv', 'a', newline='') as csvfile:
+with open('agentdata.csv', 'a', newline='') as csvfile:
     mywriter = csv.writer(csvfile, delimiter=',', lineterminator='\n')
     mywriter.writerow(header)
     mywriter.writerow(header2)
@@ -508,16 +508,16 @@ while running:
 
                 read_file = pd.read_csv(filepath + '\selectiondata.csv')
                 read_file.to_excel(filepath + '\selectiondata.xlsx', index=None, header=True)
-                read_file2 = pd.read_csv(filepath + '\sagentdata.csv')
-                read_file2.to_excel(filepath + '\sagentdata.xlsx', index=None, header=True)
+                read_file2 = pd.read_csv(filepath + '\agentdata.csv')
+                read_file2.to_excel(filepath + '\agentdata.xlsx', index=None, header=True)
         elif event.type == QUIT:
             running = False
             filepath = os.path.dirname(os.path.abspath(__file__))
 
             read_file = pd.read_csv(filepath + '\selectiondata.csv')
             read_file.to_excel(filepath + '\selectiondata.xlsx', index=None, header=True)
-            read_file2 = pd.read_csv(filepath + '\sagentdata.csv')
-            read_file2.to_excel(filepath + '\sagentdata.xlsx', index=None, header=True)
+            read_file2 = pd.read_csv(filepath + '\agentdata.csv')
+            read_file2.to_excel(filepath + '\agentdata.xlsx', index=None, header=True)
     if phase == 0:
         day_count += 1
         for x in agents:
@@ -600,7 +600,7 @@ while running:
             row.append(x.money)
             row.append(x.food)
             row.append(x.water)
-        with open('sagentdata.csv', 'a', newline='') as csvfile:
+        with open('agentdata.csv', 'a', newline='') as csvfile:
             csv_writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
             csv_writer.writerow(row)
 
