@@ -648,7 +648,7 @@ while running:
                     x.gain_product('water', relief_stats['relief_severity'])
                     x.gain_product('food', relief_stats['relief_severity'])
 
-        if day_count >= 10:
+        if day_count >= 100:
             pygame.event.post(pygame.event.Event(QUIT))
         phase = 0
 
