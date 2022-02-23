@@ -270,6 +270,7 @@ class Business(pygame.sprite.Sprite):
     def produce(self):
         if self.can_be_worked:
             self.product_amount = self.production_amount
+        print(self.product_amount)
 
     def find_worker(self, agents):
         if self.can_be_worked:
@@ -299,10 +300,10 @@ class Business(pygame.sprite.Sprite):
             if self.product_amount > 0:
                 if self.sell_price > 1:
                     self.sell_price = self.sell_price - 1
-                    #print("decrease", self.sell_price)
+                    print("decrease", self.sell_price)
             else:
                 self.sell_price = self.sell_price + 1
-                #print("increase", self.sell_price)
+                print("increase", self.sell_price)
 
     def set_production_amount(self, amount):
         amount = float(amount) / 100
@@ -579,7 +580,7 @@ while running:
                 food_sum += x.sell_price
             else:
                 water_sum += x.sell_price
-            #print(x.product_amount, x.product_type)
+            print(x.product_amount, x.product_type)
         for x in agents:
             x.calc_prios()
             x.set_consumer()
@@ -630,7 +631,7 @@ while running:
                     if x.product_type == 'water':
                         x.set_production_amount(disaster_stats['disaster_severity'])
 
-            if disaster_stats['disaster_type'] == 'Drought':
+            if disaster_stats['disaster_type'] == 'Tornado':
                 for x in businesses:
                     x.set_production_amount(disaster_stats['disaster_severity'])
 
