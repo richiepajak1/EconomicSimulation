@@ -1,6 +1,7 @@
 # Richie Pajak independent study
 
 import csv
+import math
 import os
 import pandas as pd
 import pygame
@@ -113,7 +114,7 @@ class Agent(pygame.sprite.Sprite):
                     best_option = self.home
                     self.curr_prio = 'home'
                 self.destination = best_option
-                if self.rect.colliderect(self.destination.rect):
+                if self.rect.colliderect(self.destination.rect) and businesses.has(self.destination):
                     if self.buy(self.destination):
                         self.curr_prio = 'home'
                         self.business_options.clear()
@@ -158,7 +159,7 @@ class Agent(pygame.sprite.Sprite):
             self.water += amount
 
     def calc_prios(self):
-        print(self.food, self.water, self.money)
+        #print(self.food, self.water, self.money)
         self.prio_list['food'] = 20 - self.food
         self.prio_list['water'] = 20 - self.water
         self.work_prio = 100 - self.money
@@ -294,18 +295,19 @@ class Business(pygame.sprite.Sprite):
         self.is_worked = False
 
     def price_change(self):
-        if self.product_amount > 0:
-            if self.sell_price > 1:
-                self.sell_price = self.sell_price - 1
-                print("decrease", self.sell_price)
-        else:
-            self.sell_price = self.sell_price + 1
-            print("increase", self.sell_price)
+        if self.can_be_worked:
+            if self.product_amount > 0:
+                if self.sell_price > 1:
+                    self.sell_price = self.sell_price - 1
+                    #print("decrease", self.sell_price)
+            else:
+                self.sell_price = self.sell_price + 1
+                #print("increase", self.sell_price)
 
     def set_production_amount(self, amount):
         amount = float(amount) / 100
         amount = 1 - amount
-        self.production_amount = int(self.production_amount * amount)
+        self.production_amount = int(math.ceil(self.production_amount * amount))
 
     def reset_production_amount(self):
         self.production_amount = 15
@@ -479,7 +481,7 @@ f.close()
 
 with open('simulationdata.csv', 'a', newline='') as csvfile:
     mywriter = csv.writer(csvfile, delimiter=',', lineterminator='\n')
-    mywriter.writerow(('average food price', 'average water price'))
+    mywriter.writerow(('average food price', 'average water price', 'average price'))
 
 header = []
 for x in range(0, num_agents):
@@ -521,6 +523,7 @@ while running:
             read_file2.to_excel(filepath + '/agentdata.xlsx', index=None, header=True)
     if phase == 0:
         day_count += 1
+        print(day_count)
         for x in agents:
             x.get_highest_prio()
         for x in businesses:
@@ -576,7 +579,7 @@ while running:
                 food_sum += x.sell_price
             else:
                 water_sum += x.sell_price
-            print(x.product_amount, x.product_type)
+            #print(x.product_amount, x.product_type)
         for x in agents:
             x.calc_prios()
             x.set_consumer()
@@ -592,9 +595,10 @@ while running:
             # x.kill()
         food_average = food_sum / num_food_businesses
         water_average = water_sum / num_water_businesses
+        average_price = (food_average + water_average) / 2
         with open('simulationdata.csv', 'a', newline='') as csvfile:
             csv_writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
-            csv_writer.writerow((food_average, water_average))
+            csv_writer.writerow((food_average, water_average, average_price))
 
         row = []
         for x in agents:
@@ -605,8 +609,8 @@ while running:
             csv_writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
             csv_writer.writerow(row)
 
-        print('food:', food_average)
-        print('water:', water_average)
+        #print('food:', food_average)
+        #print('water:', water_average)
 
         if day_count == disaster_stats['disaster_start_day']:
             if disaster_stats['disaster_type'] == 'Pandemic':
@@ -648,7 +652,7 @@ while running:
                     x.gain_product('water', relief_stats['relief_severity'])
                     x.gain_product('food', relief_stats['relief_severity'])
 
-        if day_count >= 100:
+        if day_count >= 200:
             pygame.event.post(pygame.event.Event(QUIT))
         phase = 0
 
