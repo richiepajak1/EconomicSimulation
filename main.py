@@ -17,9 +17,7 @@ from pygame.locals import (
 SCREEN_WIDTH = 1500
 SCREEN_HEIGHT = 900
 
-#comments
-
-def find_empty_home():
+def find_empty_home(): # This function returns the first found empty home
     for x in homes:
         if not x.owned:
             x.owned = True
@@ -27,7 +25,7 @@ def find_empty_home():
     return None
 
 
-def find_home_location():
+def find_home_location(): # This funciton calculates the proper location of a new house using the number of houses that already exist
     row = len(homes) // 5
     col = len(homes) % 5
     rowcoord = (row * 100) + 100
@@ -35,7 +33,7 @@ def find_home_location():
     return colcoord, rowcoord
 
 
-def find_business_location():
+def find_business_location(): # This funciton calculates the proper location of a new business using the number of businesses that already exist
     row = len(businesses) // 2
     col = len(businesses) % 2
     rowcoord = (row * 100) + 100
@@ -91,7 +89,7 @@ class Agent(pygame.sprite.Sprite):
             'water': -1 * self.water
         }
 
-    def update(self, businesses):
+    def update(self, businesses): # The update function is called each tick of the simulation. It handles everything an agent needs to do each time the simulation progresses
 
         if self.curr_prio == 'home':
             self.destination = self.home
@@ -130,12 +128,12 @@ class Agent(pygame.sprite.Sprite):
         else:
             self.at_home = False
 
-    def determine_business(self, businesses):
+    def determine_business(self, businesses): # This function creates a list of all businesses that sell the product the agent is interested in
         for x in businesses:
             if x.product_type == self.curr_prio:
                 self.business_options.append(x)
 
-    def buy(self, business):
+    def buy(self, business): # This funciton causes agents to attempt to purchase from a business
         num_purchases = 4
         success = False
         for x in range(0, num_purchases):
@@ -152,25 +150,25 @@ class Agent(pygame.sprite.Sprite):
     def gain_money(self, amount):
         self.money = self.money + amount
 
-    def gain_product(self, type, amount):
+    def gain_product(self, type, amount): # This function causes an agent to gain food or water
         if type == 'food':
             self.food += amount
         if type == 'water':
             self.water += amount
 
-    def calc_prios(self):
+    def calc_prios(self): # This function causes an agent's prios to be an inverse of their food, water, and money
         #print(self.food, self.water, self.money)
         self.prio_list['food'] = 20 - self.food
         self.prio_list['water'] = 20 - self.water
         self.work_prio = 100 - self.money
 
-    def lose_products(self):
+    def lose_products(self): # This function is called at the end of each day cycle and causes agents to expend 1 food and 1 water
         if self.food > 0:
             self.food = self.food - 1
         if self.water > 0:
             self.water = self.water - 1
 
-    def get_highest_prio(self):
+    def get_highest_prio(self): # This function determines an agent's highest priority and sets it to curr_prio
         prio_options = ['food']
         for x in self.prio_list:
             if self.prio_list.get(x) > self.prio_list[prio_options[0]]:
@@ -196,17 +194,17 @@ class Agent(pygame.sprite.Sprite):
     def set_consumer(self):
         self.consumer = True
 
-    def is_at_home(self):  # This is a getter function for the variable at_home
+    def is_at_home(self):
         if self.at_home is True:
             return True
         else:
             return False
 
-    def move(self):
+    def move(self): 
         direction = self.get_direction(self.destination.rect.centerx, self.destination.rect.centery)
         self.rect.move_ip(direction)
 
-    def get_direction(self, x, y):  # This function returns the direction that a creature should move based on the
+    def get_direction(self, x, y):  # This function returns the direction that an agent should move based on the
         # coordinates of its destination that are passed in
         direction_x = 0
         direction_y = 0
@@ -255,24 +253,24 @@ class Business(pygame.sprite.Sprite):
     def get_product_amount(self):
         return self.product_amount
 
-    def sell(self):
+    def sell(self): # This function is called when an agent attempts to buy a product, it determines if this business is able to sell and causes the business to gain money and lose a product
         if self.product_amount > 0 and self.can_be_worked:
             self.money = self.money + self.sell_price
             self.product_amount = self.product_amount - 1
             return True
         return False
 
-    def give_profits(self):
+    def give_profits(self): # This function gives all profits made in the day to the worker who is working the business
         if self.can_be_worked:
             self.worker.gain_money(self.money)
             self.money = 0
 
-    def produce(self):
+    def produce(self): # This funciton causes the business to produce new products
         if self.can_be_worked:
             self.product_amount = self.production_amount
         print(self.product_amount)
 
-    def find_worker(self, agents):
+    def find_worker(self, agents): # This function finds the agent with the highest work_prio that is not already working and sets it to be working at this business
         if self.can_be_worked:
             current_worker = None
             prio = float('-inf')
@@ -295,7 +293,7 @@ class Business(pygame.sprite.Sprite):
         self.worker = None
         self.is_worked = False
 
-    def price_change(self):
+    def price_change(self): # This function changes the price of goods at the end of each day
         if self.can_be_worked:
             if self.product_amount > 0:
                 if self.sell_price > 1:
@@ -305,7 +303,7 @@ class Business(pygame.sprite.Sprite):
                 self.sell_price = self.sell_price + 1
                 print("increase", self.sell_price)
 
-    def set_production_amount(self, amount):
+    def set_production_amount(self, amount): # This function changes the production amount of a business when a disaster occurs
         amount = float(amount) / 100
         amount = 1 - amount
         self.production_amount = int(math.ceil(self.production_amount * amount))
@@ -340,7 +338,7 @@ relief_stats = {
     'relief_severity': 0
 }
 
-
+# This section of code handles the gui that is used at the beginning of the program to allow users to set the parameters of the simulation
 def disaster_apply():
     disaster_stats['disaster_type'] = dropdown_result.get()
     disaster_stats['disaster_start_day'] = int(e1.get())
@@ -439,6 +437,7 @@ relief_menu.mainloop()
 
 tk.mainloop()
 
+# This section initializes all necessary variables for the simulation
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 font = pygame.font.SysFont(None, 24)
@@ -472,6 +471,7 @@ all_consumers_at_home = True
 all_agents_at_work = True
 all_agents_at_home = True
 
+# This section handles the writing of headers to the csv files used to collect data
 filename = "simulationdata.csv"
 f = open(filename, "w+")
 f.close()
@@ -501,11 +501,12 @@ with open('agentdata.csv', 'a', newline='') as csvfile:
     mywriter.writerow(header)
     mywriter.writerow(header2)
 
+# This section of the code is the main loop that handles all daily events in the simulation
 running = True
 while running:
     for event in pygame.event.get():
         if event.type == KEYDOWN:
-            if event.key == K_ESCAPE:
+            if event.key == K_ESCAPE: # This section handles data collection when the simulation ends
                 running = False
                 filepath = os.path.dirname(os.path.abspath(__file__))
 
@@ -522,15 +523,14 @@ while running:
             read_file.to_excel(filepath + '/simulationdata.xlsx', index=None, header=True)
             read_file2 = pd.read_csv(filepath + '/agentdata.csv')
             read_file2.to_excel(filepath + '/agentdata.xlsx', index=None, header=True)
-    if phase == 0:
+    if phase == 0: # Phase 0: Workers assigned to businesses
         day_count += 1
-        print(day_count)
         for x in agents:
             x.get_highest_prio()
         for x in businesses:
             x.worker = x.find_worker(agents)
         phase = 1
-    elif phase == 1:
+    elif phase == 1: # Phase 1: Workers travel to businesses
         businesses.update()
         for x in agents:
             if not x.consumer:
@@ -546,7 +546,7 @@ while running:
             phase = 2
             for x in agents:
                 x.determine_business(businesses)
-    elif phase == 2:
+    elif phase == 2: # Phase 2: Consumers purchase from businesses
         for x in agents:
             if x.consumer:
                 x.update(businesses)
@@ -558,7 +558,7 @@ while running:
                     all_consumers_at_home = False
         if all_consumers_at_home:
             phase = 3
-    elif phase == 3:
+    elif phase == 3: # Phase 3: Workers return home
         for x in agents:
             x.set_curr_prio('home')
             x.update(businesses)
@@ -568,7 +568,7 @@ while running:
                 all_agents_at_home = False
         if all_agents_at_home:
             phase = 4
-    elif phase == 4:
+    elif phase == 4: # Phase 4: Simulation is prepared for new day
         food_sum = 0
         water_sum = 0
         for x in businesses:
@@ -587,14 +587,7 @@ while running:
             x.set_curr_prio('')
             x.lose_products()
             x.type = 0
-            # if x.food > 15:
-            # if num_agents < num_homes:
-            # create_agent()
-            # x.food = x.food - 10
-            # if x.food < 0:
-            # x.home.owned = False
-            # x.kill()
-        food_average = food_sum / num_food_businesses
+        food_average = food_sum / num_food_businesses # Calculate stats to be recorded and write to csv files
         water_average = water_sum / num_water_businesses
         average_price = (food_average + water_average) / 2
         with open('simulationdata.csv', 'a', newline='') as csvfile:
@@ -610,10 +603,7 @@ while running:
             csv_writer = csv.writer(csvfile, delimiter=',', lineterminator='\n')
             csv_writer.writerow(row)
 
-        #print('food:', food_average)
-        #print('water:', water_average)
-
-        if day_count == disaster_stats['disaster_start_day']:
+        if day_count == disaster_stats['disaster_start_day']: # This section handles adjusting simulation parameters for disasters
             if disaster_stats['disaster_type'] == 'Pandemic':
                 businesses_closed = 0
                 for x in businesses:
@@ -653,13 +643,13 @@ while running:
                     x.gain_product('water', relief_stats['relief_severity'])
                     x.gain_product('food', relief_stats['relief_severity'])
 
-        if day_count >= 200:
+        if day_count >= 200: # Ends the simulation if the day count reaches 200
             pygame.event.post(pygame.event.Event(QUIT))
         phase = 0
 
     screen.fill((255, 255, 255))
 
-    for entity in all_sprites:
+    for entity in all_sprites: # Draws all pygame sprites each game tick
         screen.blit(entity.surf, entity.rect)
     img = font.render(str(day_count), True, (0, 0, 0))
     screen.blit(img, (20, 20))
